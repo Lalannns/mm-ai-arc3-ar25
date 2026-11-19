@@ -1,0 +1,28 @@
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.env
+.venv/
+venv/
+.DS_Store
+
+# Generated experiment outputs
+results/generated/
+
+# Temporary archives
+*.zip
+.DS_Store
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Environments and secrets
+.env
+.venv/
+venv/
+.DS_Store
