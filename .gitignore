@@ -26,3 +26,9 @@ __pycache__/
 .venv/
 venv/
 .DS_Store
+
+# Downloaded environment files
+environment_files/
+
+# Nested repository
+mm-ai-arc3-ar25/
