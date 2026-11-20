@@ -1,0 +1,9 @@
+numpy
+pandas
+pyarrow
+pillow
+openai
+jsonschema
+nbformat
+nbconvert
+ipykernel
