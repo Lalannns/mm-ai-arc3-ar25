@@ -75,7 +75,7 @@
         "sample_id": { "type": "string", "pattern": "^.+_step[0-9]{3}$" },
         "source": {
           "type": "string",
-          "pattern": "^(sequences\\.jsonl|transitions\\.jsonl|logs/.+\\.json)$"
+          "pattern": "^(sequences\\.jsonl|transitions\\.jsonl|logs/.+\\.json|exploration/[^/]+)$"
         },
         "episode_id": { "type": "string", "minLength": 1 },
         "step": { "type": "integer", "minimum": 0 },
@@ -97,7 +97,7 @@
         "reasoning": { "type": "string", "minLength": 1 },
         "reasoning_source": { "type": "string", "pattern": "^(observed_diff|lisa:.+)$" },
         "instruction": { "type": "string", "minLength": 1 },
-        "answer": { "type": "string", "pattern": "Action: ACTION[1-7]$" }
+        "answer": { "type": "string", "pattern": "Action: ACTION[1-7]( x=[0-9]{1,2} y=[0-9]{1,2})?$" }
       }
     }
   }

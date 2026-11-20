@@ -11,7 +11,11 @@ import pandas as pd
 from PIL import Image
 
 RAW = Path("data/raw")
+EXPLORATION = RAW / "exploration"
 OUT_DIR = Path("data/processed")
+DEFAULT_EXPLORATION_RUNS = ["20261120T014608Z", "level2_20261120T020820Z"]
+
+HUD_COL, HUD_ROW = 63, 63
 LISA_CACHE = OUT_DIR / "lisa_cache.jsonl"
 
 BACKGROUND = 9
@@ -30,8 +34,15 @@ PALETTE = np.array(
 INSTRUCTION = (
     "You are playing the ARC-AGI-3 game AR25 on a 64x64 grid. "
     "Look at the current frame and decide which action to take next. "
-    "Explain your reasoning, then give the action."
+    "Explain your reasoning, then give the action "
+    "(for ACTION6, a click, also give the cell as x=<column> y=<row>)."
 )
+
+
+def action_text(action, data):
+    if isinstance(data, dict) and "x" in data and "y" in data:
+        return f"{action} x={int(data['x'])} y={int(data['y'])}"
+    return str(action)
 
 
 def load_npy(folder, names):
@@ -110,6 +121,39 @@ def from_transitions():
     return rows
 
 
+def from_exploration(runs):
+    rows = []
+    for run in runs:
+        folder = EXPLORATION / run
+        path = folder / "experiments.jsonl"
+        if not path.exists():
+            print(f"  [warn] missing exploration run: {path}")
+            continue
+        frames = folder / "frames"
+        for line in path.read_text().splitlines():
+            if not line.strip():
+                continue
+            exp = json.loads(line)
+            eid = exp["experiment_id"]
+            before_files = [f"{eid}_step00_start.npy"]
+            for s in exp.get("steps", []):
+                rows.append({
+                    "source": f"exploration/{run}",
+                    "episode_id": f"{run}/{eid}",
+                    "step": s["step"],
+                    "action": s["action"],
+                    "action_data": s.get("action_data") or {},
+                    "grid_before": load_npy(frames, before_files),
+                    "grid_after": load_npy(frames, s.get("after_files")),
+                    "before_state": strip_state(s.get("state_before")),
+                    "after_state": strip_state(s.get("state_after")),
+                    "levels_completed": s.get("levels_completed"),
+                    "raw_reasoning": None,
+                })
+                before_files = s.get("after_files") or []
+    return rows
+
+
 def as_grid(value):
     if value is None:
         return None
@@ -166,11 +210,25 @@ def describe_change(before, after):
     if changed == 0:
         return 0, "No pixel changed: the action had no visible effect."
 
+    counter = int(np.count_nonzero(before[:, HUD_COL] != after[:, HUD_COL]))
+    floor = int(np.count_nonzero(before[HUD_ROW, :HUD_COL] != after[HUD_ROW, :HUD_COL]))
+    before, after = before[:HUD_ROW, :HUD_COL], after[:HUD_ROW, :HUD_COL]
+    play = int(np.count_nonzero(before != after))
+
+    parts = []
+    if counter:
+        parts.append(f"{counter} cell(s) of the move-counter column x={HUD_COL} changed.")
+    if floor:
+        parts.append(f"{floor} cell(s) of the bottom row y={HUD_ROW} changed.")
+    if play == 0:
+        parts.append("Nothing changed in the play area.")
+        return changed, " ".join(parts)
+
     ys, xs = np.where(before != after)
-    parts = [
-        f"{changed} pixels changed inside the region "
+    parts.insert(0,
+        f"{play} pixels changed in the play area inside the region "
         f"x={xs.min()}..{xs.max()}, y={ys.min()}..{ys.max()}."
-    ]
+    )
     b_boxes, a_boxes = color_boxes(before), color_boxes(after)
     for c in sorted(set(b_boxes) | set(a_boxes)):
         b, a = b_boxes.get(c), a_boxes.get(c)
@@ -201,7 +259,7 @@ def transition_hash(before, after, action):
 
 def observed_reasoning(row):
     return (
-        f"Observation: I executed {row['action']}. {row['observation']} "
+        f"Observation: I executed {action_text(row['action'], json.loads(row['action_data']))}. {row['observation']} "
         f"Game state afterwards: {row['after_state'] or 'unknown'}."
     )
 
@@ -252,13 +310,9 @@ def lisa_model():
 
 
 def lisa_reasoning(row, cache):
-    key = f"{row['transition_hash']}:{lisa_model()}"
-    if key in cache:
-        return cache[key]
-
     prompt = (
         "You are annotating a dataset for the grid game ARC-AGI-3 AR25.\n"
-        f"Action taken: {row['action']}\n"
+        f"Action taken: {action_text(row['action'], json.loads(row['action_data']))}\n"
         f"Measured effect (ground truth): {row['observation']}\n"
         f"Game state after: {row['after_state']}\n\n"
         "Write 2-4 sentences of first-person reasoning an agent could have had "
@@ -266,6 +320,10 @@ def lisa_reasoning(row, cache):
         "Clearly mark anything that is a hypothesis with 'Hypothesis:'. "
         "Do not invent effects that are not in the measured effect."
     )
+    key = f"{row['transition_hash']}:{lisa_model()}:{hashlib.sha1(prompt.encode()).hexdigest()[:12]}"
+    if key in cache:
+        return cache[key]
+
     response = lisa_client().chat.completions.create(
         model=lisa_model(),
         messages=[{"role": "user", "content": prompt}],
@@ -284,13 +342,18 @@ def main():
     parser.add_argument("--reasoning", choices=["observed", "lisa"], default="observed")
     parser.add_argument("--limit", type=int, default=None, help="only first N transitions")
     parser.add_argument("--output", default=str(OUT_DIR / "ar25_transitions.parquet"))
+    parser.add_argument(
+        "--exploration-runs", nargs="*", default=DEFAULT_EXPLORATION_RUNS,
+        help="folders of data/raw/exploration/ to include (pass the flag with no value to include none)",
+    )
     args = parser.parse_args()
 
     if not RAW.exists():
         sys.exit("Run this script from the repository root (data/raw not found).")
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    raw_rows = from_sequences() + from_transitions() + from_episode_logs()
+    raw_rows = (from_sequences() + from_transitions() + from_episode_logs()
+                + from_exploration(args.exploration_runs))
     print(f"Loaded {len(raw_rows)} raw transitions")
 
     rows, skipped = [], 0
@@ -347,7 +410,7 @@ def main():
             rec["reasoning_source"] = "observed_diff"
 
         rec["instruction"] = INSTRUCTION
-        rec["answer"] = f"{rec['reasoning']}\nAction: {rec['action']}"
+        rec["answer"] = f"{rec['reasoning']}\nAction: {action_text(rec['action'], r['action_data'])}"
         records.append(rec)
         print(f"  {sample_id:40s} {r['action']:8s} changed={changed:4d}")
 

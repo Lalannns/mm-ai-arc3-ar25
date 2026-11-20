@@ -1,6 +1,6 @@
 # AR25 dataset validation report
 
-Generated: 2026-11-20 01:50 UTC  
+Generated: 2026-11-20 02:31 UTC  
 Command: `python scripts/validate_dataset.py`  
 Status: **PASS** (0 errors, 3 warnings)
 
@@ -31,13 +31,13 @@ Status: **PASS** (0 errors, 3 warnings)
 
 | Item | Value |
 |---|---|
-| rows | 52 |
-| unique transitions | 41 |
-| duplicate transitions | 11 |
-| rows with no visible change | 14 |
-| actions | ACTION1: 27, ACTION2: 11, ACTION3: 3, ACTION4: 3, ACTION5: 3, ACTION6: 4, ACTION7: 1 |
-| sources | logs/ep_001.json: 6, logs/ep_ai_001.json: 30, sequences.jsonl: 5, transitions.jsonl: 11 |
-| reasoning | observed_diff: 52 |
+| rows | 262 |
+| unique transitions | 146 |
+| duplicate transitions | 116 |
+| rows with no visible change | 65 |
+| actions | ACTION1: 57, ACTION2: 68, ACTION3: 37, ACTION4: 24, ACTION5: 19, ACTION6: 40, ACTION7: 17 |
+| sources | exploration/20261120T014608Z: 140, exploration/level2_20261120T020820Z: 70, logs/ep_001.json: 6, logs/ep_ai_001.json: 30, sequences.jsonl: 5, transitions.jsonl: 11 |
+| reasoning | observed_diff: 262 |
 
 ## Checks
 
@@ -67,4 +67,4 @@ Status: **PASS** (0 errors, 3 warnings)
 |---|---|---|---|
 | WARNING | legacy_format | `data/raw/trajectories/transitions.jsonl:20261119T100908020911Z` | uses before_file/after_file instead of *_files lists |
 | WARNING | incomplete_transition | `data/raw/logs/ep_001.json:step6` | last step has no next_grid_state, so its after frame is unknown |
-| WARNING | duplicate_transition | `data/processed/ar25_transitions_full.parquet` | 11 rows repeat an identical (before, action, after) transition |
+| WARNING | duplicate_transition | `data/processed/ar25_transitions_full.parquet` | 116 rows repeat an identical (before, action, after) transition |

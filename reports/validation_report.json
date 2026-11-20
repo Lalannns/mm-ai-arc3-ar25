@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-11-20 01:50 UTC",
+  "generated_utc": "2026-11-20 02:31 UTC",
   "status": "PASS",
   "errors": 0,
   "warnings": 3,
@@ -57,7 +57,7 @@
       "no_change_rows": 0
     },
     "data/processed/ar25_transitions_full.parquet": {
-      "rows": 52,
+      "rows": 262,
       "columns": [
         "sample_id",
         "source",
@@ -83,27 +83,29 @@
         "instruction",
         "answer"
       ],
-      "duplicate_transitions": 11,
-      "unique_transitions": 41,
+      "duplicate_transitions": 116,
+      "unique_transitions": 146,
       "actions": {
-        "ACTION1": 27,
-        "ACTION2": 11,
-        "ACTION3": 3,
-        "ACTION4": 3,
-        "ACTION5": 3,
-        "ACTION6": 4,
-        "ACTION7": 1
+        "ACTION1": 57,
+        "ACTION2": 68,
+        "ACTION3": 37,
+        "ACTION4": 24,
+        "ACTION5": 19,
+        "ACTION6": 40,
+        "ACTION7": 17
       },
       "sources": {
+        "exploration/20261120T014608Z": 140,
+        "exploration/level2_20261120T020820Z": 70,
         "logs/ep_001.json": 6,
         "logs/ep_ai_001.json": 30,
         "sequences.jsonl": 5,
         "transitions.jsonl": 11
       },
       "reasoning_sources": {
-        "observed_diff": 52
+        "observed_diff": 262
       },
-      "no_change_rows": 14
+      "no_change_rows": 65
     }
   },
   "findings": [
@@ -123,7 +125,7 @@
       "level": "WARNING",
       "check": "duplicate_transition",
       "target": "data/processed/ar25_transitions_full.parquet",
-      "message": "11 rows repeat an identical (before, action, after) transition"
+      "message": "116 rows repeat an identical (before, action, after) transition"
     }
   ]
 }
