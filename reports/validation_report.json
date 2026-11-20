@@ -1,0 +1,129 @@
+{
+  "generated_utc": "2026-11-20 01:50 UTC",
+  "status": "PASS",
+  "errors": 0,
+  "warnings": 3,
+  "raw": {
+    "sequential_trajectories": 1,
+    "sequential_steps": 5,
+    "single_action_transitions": 11,
+    "episode_log_steps": 37,
+    "npy_frame_files": 33,
+    "orphan_npy_files": 0
+  },
+  "parquet": {
+    "data/processed/ar25_transitions.parquet": {
+      "rows": 5,
+      "columns": [
+        "sample_id",
+        "source",
+        "episode_id",
+        "step",
+        "action",
+        "action_id",
+        "action_data",
+        "before_state",
+        "after_state",
+        "levels_completed",
+        "changed_pixels",
+        "observation",
+        "transition_hash",
+        "is_duplicate",
+        "raw_reasoning",
+        "grid_before",
+        "grid_after",
+        "image_before",
+        "image_after",
+        "reasoning",
+        "reasoning_source",
+        "instruction",
+        "answer"
+      ],
+      "duplicate_transitions": 0,
+      "unique_transitions": 5,
+      "actions": {
+        "ACTION1": 1,
+        "ACTION2": 1,
+        "ACTION3": 1,
+        "ACTION4": 1,
+        "ACTION5": 1
+      },
+      "sources": {
+        "sequences.jsonl": 5
+      },
+      "reasoning_sources": {
+        "lisa:lisa-pro": 5
+      },
+      "no_change_rows": 0
+    },
+    "data/processed/ar25_transitions_full.parquet": {
+      "rows": 52,
+      "columns": [
+        "sample_id",
+        "source",
+        "episode_id",
+        "step",
+        "action",
+        "action_id",
+        "action_data",
+        "before_state",
+        "after_state",
+        "levels_completed",
+        "changed_pixels",
+        "observation",
+        "transition_hash",
+        "is_duplicate",
+        "raw_reasoning",
+        "grid_before",
+        "grid_after",
+        "image_before",
+        "image_after",
+        "reasoning",
+        "reasoning_source",
+        "instruction",
+        "answer"
+      ],
+      "duplicate_transitions": 11,
+      "unique_transitions": 41,
+      "actions": {
+        "ACTION1": 27,
+        "ACTION2": 11,
+        "ACTION3": 3,
+        "ACTION4": 3,
+        "ACTION5": 3,
+        "ACTION6": 4,
+        "ACTION7": 1
+      },
+      "sources": {
+        "logs/ep_001.json": 6,
+        "logs/ep_ai_001.json": 30,
+        "sequences.jsonl": 5,
+        "transitions.jsonl": 11
+      },
+      "reasoning_sources": {
+        "observed_diff": 52
+      },
+      "no_change_rows": 14
+    }
+  },
+  "findings": [
+    {
+      "level": "WARNING",
+      "check": "legacy_format",
+      "target": "data/raw/trajectories/transitions.jsonl:20261119T100908020911Z",
+      "message": "uses before_file/after_file instead of *_files lists"
+    },
+    {
+      "level": "WARNING",
+      "check": "incomplete_transition",
+      "target": "data/raw/logs/ep_001.json:step6",
+      "message": "last step has no next_grid_state, so its after frame is unknown"
+    },
+    {
+      "level": "WARNING",
+      "check": "duplicate_transition",
+      "target": "data/processed/ar25_transitions_full.parquet",
+      "message": "11 rows repeat an identical (before, action, after) transition"
+    }
+  ]
+}
