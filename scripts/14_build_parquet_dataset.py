@@ -141,6 +141,75 @@ def from_episode_logs():
     return rows
 
 
+def from_exploration():
+    folders = [
+        "20261120T013551Z",
+        "level2_20261120T015752Z",
+        "level2_20261120T020357Z",
+        "level2_20261120T020820Z",
+    ]
+
+    rows = []
+
+    for run_id in folders:
+        run_folder = RAW / "exploration" / run_id
+        experiments_file = run_folder / "experiments.jsonl"
+        frames_folder = run_folder / "frames"
+
+        if not experiments_file.exists():
+            print(f"[warn] missing exploration file: {experiments_file}")
+            continue
+
+        for line in experiments_file.read_text().splitlines():
+            if not line.strip():
+                continue
+
+            experiment = json.loads(line)
+            experiment_id = experiment["experiment_id"]
+            steps = experiment["steps"]
+
+            previous_after = None
+
+            for step in steps:
+                after_files = step.get("after_files") or []
+                if not after_files:
+                    print(
+                        f"[warn] no after frame: "
+                        f"{experiment_id} step {step['step']}"
+                    )
+                    previous_after = None
+                    continue
+
+                after_path = frames_folder / after_files[-1]
+
+                if step["step"] == 1:
+                    start_path = frames_folder / (
+                        f"{experiment_id}_step00_start.npy"
+                    )
+                    before = np.load(start_path) if start_path.exists() else None
+                else:
+                    before = previous_after
+
+                after = np.load(after_path) if after_path.exists() else None
+
+                rows.append({
+                    "source": f"exploration/{run_id}/experiments.jsonl",
+                    "episode_id": f"{run_id}_{experiment_id}",
+                    "step": step["step"],
+                    "action": step["action"],
+                    "action_data": step.get("action_data") or {},
+                    "grid_before": before,
+                    "grid_after": after,
+                    "before_state": strip_state(step.get("state_before")),
+                    "after_state": strip_state(step.get("state_after")),
+                    "levels_completed": step.get("levels_completed"),
+                    "raw_reasoning": None,
+                })
+
+                previous_after = after
+
+    return rows
+
 def to_png(grid, name):
     rgb = PALETTE[np.clip(grid.astype(np.int64), 0, 15)]
     img = Image.fromarray(rgb).resize(
@@ -290,7 +359,12 @@ def main():
         sys.exit("Run this script from the repository root (data/raw not found).")
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    raw_rows = from_sequences() + from_transitions() + from_episode_logs()
+    raw_rows = (
+    from_sequences()
+    + from_transitions()
+    + from_episode_logs()
+    + from_exploration()
+)
     print(f"Loaded {len(raw_rows)} raw transitions")
 
     rows, skipped = [], 0

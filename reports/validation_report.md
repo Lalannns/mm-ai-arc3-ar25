@@ -1,8 +1,8 @@
 # AR25 dataset validation report
 
-Generated: 2026-11-20 01:50 UTC  
+Generated: 2026-11-21 13:15 UTC  
 Command: `python scripts/validate_dataset.py`  
-Status: **PASS** (0 errors, 3 warnings)
+Status: **PASS** (0 errors, 4 warnings)
 
 ## Raw data (`data/raw/`)
 
@@ -12,6 +12,8 @@ Status: **PASS** (0 errors, 3 warnings)
 | sequential steps | 5 |
 | single action transitions | 11 |
 | episode log steps | 37 |
+| exploration experiments | 354 |
+| exploration steps | 940 |
 | npy frame files | 33 |
 | orphan npy files | 0 |
 
@@ -19,13 +21,13 @@ Status: **PASS** (0 errors, 3 warnings)
 
 | Item | Value |
 |---|---|
-| rows | 5 |
-| unique transitions | 5 |
-| duplicate transitions | 0 |
-| rows with no visible change | 0 |
-| actions | ACTION1: 1, ACTION2: 1, ACTION3: 1, ACTION4: 1, ACTION5: 1 |
-| sources | sequences.jsonl: 5 |
-| reasoning | lisa:lisa-pro: 5 |
+| rows | 372 |
+| unique transitions | 146 |
+| duplicate transitions | 226 |
+| rows with no visible change | 105 |
+| actions | ACTION1: 71, ACTION2: 97, ACTION3: 57, ACTION4: 38, ACTION5: 32, ACTION6: 58, ACTION7: 19 |
+| sources | exploration/20261120T013551Z/experiments.jsonl: 140, exploration/level2_20261120T015752Z/experiments.jsonl: 40, exploration/level2_20261120T020357Z/experiments.jsonl: 70, exploration/level2_20261120T020820Z/experiments.jsonl: 70, logs/ep_001.json: 6, logs/ep_ai_001.json: 30, sequences.jsonl: 5, transitions.jsonl: 11 |
+| reasoning | observed_diff: 372 |
 
 ## Processed dataset `data/processed/ar25_transitions_full.parquet`
 
@@ -53,7 +55,7 @@ Status: **PASS** (0 errors, 3 warnings)
 | broken_sequence | 0 | 0 |
 | incomplete_transition | 0 | 1 |
 | duplicate_record | 0 | 0 |
-| duplicate_transition | 0 | 1 |
+| duplicate_transition | 0 | 2 |
 | duplicate_flag | 0 | 0 |
 | changed_pixels_mismatch | 0 | 0 |
 | hash_mismatch | 0 | 0 |
@@ -67,4 +69,5 @@ Status: **PASS** (0 errors, 3 warnings)
 |---|---|---|---|
 | WARNING | legacy_format | `data/raw/trajectories/transitions.jsonl:20261119T100908020911Z` | uses before_file/after_file instead of *_files lists |
 | WARNING | incomplete_transition | `data/raw/logs/ep_001.json:step6` | last step has no next_grid_state, so its after frame is unknown |
+| WARNING | duplicate_transition | `data/processed/ar25_transitions.parquet` | 226 rows repeat an identical (before, action, after) transition |
 | WARNING | duplicate_transition | `data/processed/ar25_transitions_full.parquet` | 11 rows repeat an identical (before, action, after) transition |
