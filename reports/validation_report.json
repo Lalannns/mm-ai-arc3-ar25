@@ -1,21 +1,21 @@
 {
-  "generated_utc": "2026-11-21 13:15 UTC",
+  "generated_utc": "2026-11-21 13:24 UTC",
   "status": "PASS",
   "errors": 0,
   "warnings": 4,
   "raw": {
-    "sequential_trajectories": 1,
-    "sequential_steps": 5,
+    "sequential_trajectories": 2,
+    "sequential_steps": 8,
     "single_action_transitions": 11,
     "episode_log_steps": 37,
     "exploration_experiments": 354,
     "exploration_steps": 940,
-    "npy_frame_files": 33,
+    "npy_frame_files": 40,
     "orphan_npy_files": 0
   },
   "parquet": {
     "data/processed/ar25_transitions.parquet": {
-      "rows": 372,
+      "rows": 375,
       "columns": [
         "sample_id",
         "source",
@@ -41,10 +41,10 @@
         "instruction",
         "answer"
       ],
-      "duplicate_transitions": 226,
+      "duplicate_transitions": 229,
       "unique_transitions": 146,
       "actions": {
-        "ACTION1": 71,
+        "ACTION1": 74,
         "ACTION2": 97,
         "ACTION3": 57,
         "ACTION4": 38,
@@ -59,11 +59,11 @@
         "exploration/level2_20261120T020820Z/experiments.jsonl": 70,
         "logs/ep_001.json": 6,
         "logs/ep_ai_001.json": 30,
-        "sequences.jsonl": 5,
+        "sequences.jsonl": 8,
         "transitions.jsonl": 11
       },
       "reasoning_sources": {
-        "observed_diff": 372
+        "observed_diff": 375
       },
       "no_change_rows": 105
     },
@@ -134,7 +134,7 @@
       "level": "WARNING",
       "check": "duplicate_transition",
       "target": "data/processed/ar25_transitions.parquet",
-      "message": "226 rows repeat an identical (before, action, after) transition"
+      "message": "229 rows repeat an identical (before, action, after) transition"
     },
     {
       "level": "WARNING",
