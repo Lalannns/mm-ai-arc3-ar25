@@ -1,7 +1,7 @@
 # AR25 dataset validation report
 
-Generated: 2026-11-21 13:24 UTC  
-Command: `python scripts/validate_dataset.py`  
+Generated: 2026-11-21 20:14 UTC
+Command: `python scripts/validate_dataset.py`
 Status: **PASS** (0 errors, 4 warnings)
 
 ## Raw data (`data/raw/`)
