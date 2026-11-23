@@ -1,0 +1,52 @@
+{
+  "status": "passed",
+  "parquet_path": "data/parquet/ar25_experiment_qa_corrected.parquet",
+  "schema_path": "schemas/experiment_qa_schema.json",
+  "rows": 1021,
+  "unique_record_ids": 1021,
+  "unique_signatures": 1021,
+  "raw_experiments": 1300,
+  "collapsed_source_records": 279,
+  "source_inventory": {
+    "main_experiment_count": 1300,
+    "unsuccessful_summary_count": 126,
+    "physical_jsonl_entry_count": 1426,
+    "verified_duplicate_summary_count": 126,
+    "missing_summary_matches": 0,
+    "field_mismatches": 0,
+    "duplicate_identities": 0,
+    "malformed_jsonl_records": 0,
+    "main_files_found": 16,
+    "summary_files_found": 9
+  },
+  "target_pairs": 1000,
+  "target_shortfall": 0,
+  "outcomes": {
+    "changed": 873,
+    "no_visible_change": 142,
+    "level_progress": 6
+  },
+  "unknown_start_level_rows": 1021,
+  "unknown_end_level_rows": 0,
+  "unknown_prefix_rows": 1021,
+  "unverified_outcome_rows": 6,
+  "errors": [],
+  "warnings": [
+    "row 110: level_progress is retained from raw metadata but cannot be independently verified because starting level is unknown",
+    "row 204: level_progress is retained from raw metadata but cannot be independently verified because starting level is unknown",
+    "row 298: level_progress is retained from raw metadata but cannot be independently verified because starting level is unknown",
+    "row 490: level_progress is retained from raw metadata but cannot be independently verified because starting level is unknown",
+    "row 510: level_progress is retained from raw metadata but cannot be independently verified because starting level is unknown",
+    "row 943: level_progress is retained from raw metadata but cannot be independently verified because starting level is unknown",
+    "historical provenance gaps: unknown starts=1021, unknown ends=0, unknown prefixes=1021; null/unknown values are preserved",
+    "6 level_progress labels are retained from raw metadata but cannot be independently reclassified without a starting level"
+  ],
+  "limitations": [
+    "QA rows are experiment/trajectory observations, not independent ARC reasoning problems.",
+    "Repeated initial states and convergent trajectories create dependence; random row splits can leak related evidence.",
+    "counter_cells_used is a heuristic estimate, not a verified internal game counter.",
+    "This dataset documents observed experiment sequences; it does not prove autonomous VLM game solving.",
+    "Answer checks verify declared numeric claims and provenance fields, not unrestricted natural-language semantic truth.",
+    "Group train/validation/test splits by initial visual state and experiment family/trajectory to reduce leakage."
+  ]
+}

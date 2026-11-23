@@ -46,7 +46,7 @@ def to_grid(raw_frame) -> np.ndarray:
     arr = np.asarray(raw_frame, dtype=np.int8)
     while arr.ndim > 2:
         arr = arr[-1]
-    return np.ascontiguousarray(arr, dtype=np.int8)
+    return np.ascontiguousarray(arr, dtype=np.int8).copy()
 
 
 def color_transitions(before: np.ndarray, after: np.ndarray) -> dict[str, int]:
@@ -294,7 +294,12 @@ def main() -> None:
 
         cur_arr = to_grid(obs0.frame[-1])
         cur_state = obs0.state.value if hasattr(obs0.state, "value") else str(obs0.state)
-        cur_levels = int(getattr(obs0, "levels_completed", 0) or 0)
+        raw_levels_reset = getattr(obs0, "levels_completed", None)
+        if raw_levels_reset is None:
+            raise RuntimeError("Reset observation is missing levels_completed; refusing to assume level 0")
+        cur_levels = int(raw_levels_reset)
+        levels_completed_reset = cur_levels
+        prefix_actions = [dict(a) for a in (spec.get("prefix") or [])]
 
         # Advance through any starting-state prefix without recording it as target actions
         for p_act in spec.get("prefix") or []:
@@ -303,7 +308,9 @@ def main() -> None:
                 raise RuntimeError("Prefix step returned no frame")
             cur_arr = to_grid(p_obs.frame[-1])
             cur_state = p_obs.state.value if hasattr(p_obs.state, "value") else str(p_obs.state)
-            cur_levels = int(getattr(p_obs, "levels_completed", cur_levels) or 0)
+            raw_prefix_levels = getattr(p_obs, "levels_completed", None)
+            if raw_prefix_levels is not None:
+                cur_levels = int(raw_prefix_levels)
 
         eid = spec["experiment_id"]
         init_arr = cur_arr.copy()
@@ -333,7 +340,7 @@ def main() -> None:
                 np.save(frames_dir / fname, arr_f)
                 after_files.append(fname)
 
-            final_step_arr = to_grid(obs_after.frame[-1])
+            final_step_arr = to_grid(obs_after.frame[-1]).copy()
             changed = int(np.count_nonzero(cur_arr != final_step_arr)) if cur_arr.shape == final_step_arr.shape else int(final_step_arr.size)
             c_cells = estimate_counter_cells(cur_arr, final_step_arr)
             if changed > 0:
@@ -342,7 +349,9 @@ def main() -> None:
             total_counter += c_cells
 
             state_after = obs_after.state.value if hasattr(obs_after.state, "value") else str(obs_after.state)
-            levels_after = int(getattr(obs_after, "levels_completed", cur_levels) or 0)
+            levels_before = cur_levels
+            raw_levels_after = getattr(obs_after, "levels_completed", None)
+            levels_after = cur_levels if raw_levels_after is None else int(raw_levels_after)
             avail = [a.name if hasattr(a, "name") else str(a) for a in (getattr(obs_after, "available_actions", None) or [])]
 
             steps_meta.append({
@@ -354,7 +363,9 @@ def main() -> None:
                 "after_frame_count": len(after_files),
                 "state_before": cur_state,
                 "state_after": state_after,
-                "levels_completed": levels_after,
+                "levels_completed": levels_after,  # backward-compatible alias for post-step value
+                "levels_completed_before": levels_before,
+                "levels_completed_after": levels_after,
                 "counter_cells_used": c_cells,
                 "play_area_changed_cells": max(0, changed - c_cells),
                 "available_actions": avail,
@@ -364,7 +375,7 @@ def main() -> None:
                 "bbox_xyxy": bbox_xyxy(cur_arr, final_step_arr),
                 "color_transitions": color_transitions(cur_arr, final_step_arr),
             })
-            cur_arr = final_step_arr
+            cur_arr = final_step_arr.copy()
             cur_state = state_after
             cur_levels = levels_after
 
@@ -377,7 +388,15 @@ def main() -> None:
             "timestamp_utc": datetime.now(timezone.utc).isoformat(),
             "game_id": GAME_ID,
             "seed": args.seed,
-            "actions": spec["actions"],
+            "actions": spec["actions"],  # target actions; prefix is kept separate
+            "prefix_actions": prefix_actions,
+            "prefix_actions_provenance": "observed",
+            "levels_completed_reset": levels_completed_reset,
+            "levels_completed_after_prefix": levels_start,
+            "levels_completed_start": levels_start,
+            "levels_completed_start_provenance": "observed",
+            "levels_completed_end": cur_levels,
+            "levels_completed_end_provenance": "observed",
             "steps_executed": len(steps_meta),
             "steps": steps_meta,
             "net_change": {

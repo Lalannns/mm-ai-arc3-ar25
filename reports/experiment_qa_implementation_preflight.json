@@ -1,0 +1,27 @@
+{
+  "status": "preflight_passed_parquet_pending",
+  "baseline_commit": "41879b1a5bb4572dad0eeb4f8c5ef3cd0f7cbb10",
+  "raw_exploration_directories": 16,
+  "raw_experiment_records": 1300,
+  "canonical_trajectory_records": 1021,
+  "collapsed_source_records_mapped": 279,
+  "source_records_independently_recomputed": 1300,
+  "row_schema_and_evidence_errors": 0,
+  "provenance_mapping_errors": 0,
+  "historical_unknown_start_and_prefix_rows": 1021,
+  "unverified_historical_level_progress_rows": 6,
+  "regression_tests_passed": 16,
+  "outcomes": {
+    "changed": 873,
+    "no_visible_change": 142,
+    "level_progress_recorded_unverified": 6
+  },
+  "parquet_generated_in_this_environment": false,
+  "reason_parquet_not_generated": "pyarrow is unavailable in this environment and package installation cannot reach the package index",
+  "required_local_verification": [
+    "Run scripts/16_build_experiment_qa_parquet.py in the project .venv",
+    "Run scripts/validate_experiment_qa.py in the project .venv",
+    "Run pytest in the project .venv",
+    "Inspect corrected Parquet and reports before accepting the artifact"
+  ]
+}

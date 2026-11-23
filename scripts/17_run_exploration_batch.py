@@ -30,6 +30,8 @@ LEVEL1_SOLVE_PREFIX = [
 
 
 def color_transitions(before: np.ndarray, after: np.ndarray) -> dict[str, int]:
+    if before.shape != after.shape:
+        return {}
     diff = before != after
     if not np.any(diff):
         return {}
@@ -43,6 +45,8 @@ def color_transitions(before: np.ndarray, after: np.ndarray) -> dict[str, int]:
 
 
 def bbox_xyxy(before: np.ndarray, after: np.ndarray):
+    if before.shape != after.shape:
+        return None
     ys, xs = np.where(before != after)
     if len(xs) == 0:
         return None
@@ -145,13 +149,17 @@ def main() -> None:
             raise RuntimeError("Environment reset returned no observation/frame")
 
         eid = spec["experiment_id"]
-        init_arr = np.asarray(obs0.frame[-1], dtype=np.int8)
+        init_arr = np.asarray(obs0.frame[-1], dtype=np.int8).copy()
         init_fname = f"{eid}_step00_start.npy"
         np.save(frames_dir / init_fname, init_arr)
 
         prev_arr = init_arr
         prev_state = obs0.state.value if hasattr(obs0.state, "value") else str(obs0.state)
-        levels_start = int(getattr(obs0, "levels_completed", 0) or 0)
+        raw_levels_start = getattr(obs0, "levels_completed", None)
+        if raw_levels_start is None:
+            raise RuntimeError("Reset observation is missing levels_completed; refusing to assume level 0")
+        levels_start = int(raw_levels_start)
+        levels_current = levels_start
 
         steps_meta = []
         any_change = False
@@ -171,14 +179,17 @@ def main() -> None:
                 np.save(frames_dir / fname, arr_f)
                 after_files.append(fname)
 
-            final_step_arr = np.asarray(obs_after.frame[-1], dtype=np.int8)
-            changed = int(np.count_nonzero(prev_arr != final_step_arr))
+            final_step_arr = np.asarray(obs_after.frame[-1], dtype=np.int8).copy()
+            changed = (int(np.count_nonzero(prev_arr != final_step_arr))
+                       if prev_arr.shape == final_step_arr.shape else int(final_step_arr.size))
             if changed > 0:
                 any_change = True
             total_changed += changed
 
             state_after = obs_after.state.value if hasattr(obs_after.state, "value") else str(obs_after.state)
-            levels_after = int(getattr(obs_after, "levels_completed", levels_start) or 0)
+            levels_before = levels_current
+            raw_levels_after = getattr(obs_after, "levels_completed", None)
+            levels_after = levels_current if raw_levels_after is None else int(raw_levels_after)
             avail = [a.name if hasattr(a, "name") else str(a) for a in (getattr(obs_after, "available_actions", None) or [])]
 
             steps_meta.append({
@@ -189,7 +200,9 @@ def main() -> None:
                 "after_frame_count": len(after_files),
                 "state_before": prev_state,
                 "state_after": state_after,
-                "levels_completed": levels_after,
+                "levels_completed": levels_after,  # backward-compatible alias for post-step value
+                "levels_completed_before": levels_before,
+                "levels_completed_after": levels_after,
                 "counter_cells_used": 0,
                 "play_area_changed_cells": changed,
                 "available_actions": avail,
@@ -199,10 +212,11 @@ def main() -> None:
                 "bbox_xyxy": bbox_xyxy(prev_arr, final_step_arr),
                 "color_transitions": color_transitions(prev_arr, final_step_arr),
             })
-            prev_arr = final_step_arr
+            prev_arr = final_step_arr.copy()
             prev_state = state_after
+            levels_current = levels_after
 
-        levels_end = int(steps_meta[-1]["levels_completed"])
+        levels_end = levels_current
         outcome = classify_outcome(init_arr, prev_arr, levels_start, levels_end, any_change)
 
         rec = {
@@ -212,12 +226,19 @@ def main() -> None:
             "timestamp_utc": datetime.now(timezone.utc).isoformat(),
             "game_id": GAME_ID,
             "seed": args.seed,
-            "actions": spec["actions"],
+            "actions": spec["actions"],  # target actions
+            "prefix_actions": [],
+            "prefix_actions_provenance": "observed",
+            "levels_completed_start": levels_start,
+            "levels_completed_start_provenance": "observed",
+            "levels_completed_end": levels_end,
+            "levels_completed_end_provenance": "observed",
             "steps_executed": len(steps_meta),
             "steps": steps_meta,
             "net_change": {
                 "shape_changed": init_arr.shape != prev_arr.shape,
-                "changed_cells": int(np.count_nonzero(init_arr != prev_arr)),
+                "changed_cells": (int(np.count_nonzero(init_arr != prev_arr))
+                                  if init_arr.shape == prev_arr.shape else int(prev_arr.size)),
                 "bbox_xyxy": bbox_xyxy(init_arr, prev_arr),
                 "color_transitions": color_transitions(init_arr, prev_arr),
             },
